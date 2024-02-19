@@ -5,17 +5,19 @@ from typing import List, Optional
 
 # Define a schema for the skill with rating
 class SkillBase(BaseModel):
-    skill_name: str
+    skill: str
 
 class SkillCreate(SkillBase):
     pass
 
 class Skill(SkillBase):
-    skill_id: int
     rating: int
     class Config:
         orm_mode = True
 
+class SkillUpdate(BaseModel):
+    skill: str
+    rating: int
 
 # Define a schema for the User
 class UserBase(BaseModel):
@@ -27,8 +29,16 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     pass
 
+
+class UserUpdate(UserBase):
+    name: Optional[str] = None
+    company: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    skills: Optional[List[SkillUpdate]] = None
+
+
 class User(UserBase):
-    user_id: int
     skills: List[Skill] = []
     
     class Config:

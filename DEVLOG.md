@@ -21,10 +21,28 @@ We don't store the skills directly in the participants table because:
 The many-to-many relationship between participants and skills is modeled using a junction table called ParticipantSkills. This table contains two foreign keys, participant_id and skill_id, which reference the primary keys of the participants and skills tables, respectively. The combination of these two foreign keys forms a composite primary key for the ParticipantSkills table, ensuring that each participant-skill association is unique.
 
 ## Assumptions:
+
 Some data had some strange entries, so the following assumptions were made and the data was cleaned accordingly:
 
 1. Emails and phone numbers must be unique. If we try to insert a participant with an email or phone number that already exists, we will skip that participant and log a warning message.
 
 2. Each user cannot have the same skill with multiple ratings. If we try to insert the a skill that already has a rating under the same user, we will skip that skill and log a warning message.
 
-db_init.py will output warning messages if any of the above assumptions are violated. 
+db_init.py will output warning messages if any of the above assumptions are violated.
+
+```json
+{
+  "skills": [
+    {
+      "skill": "Swift",
+      "rating": 70
+    },
+    {
+      "skill": "Swift",
+      "rating": 80
+    }
+  ]
+}
+```
+
+If we call `PUT /users/{user_id}` with the above JSON, we will skip the second skill and the skill will be updated to 70.
