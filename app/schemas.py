@@ -43,3 +43,10 @@ class User(UserBase):
     
     class Config:
         orm_mode = True
+
+class SkillFrequency(BaseModel):
+    skill_name: str
+    frequency: int
+
+    class Config:
+        orm_mode = True

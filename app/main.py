@@ -1,6 +1,7 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from .database import get_db  # Make sure this import matches your project structure
 from . import schemas, models  # Adjust imports as necessary
 
@@ -70,6 +71,11 @@ def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Dep
             # Add the skill to the set of processed skills
             processed_skills.add(skill_data.skill)
             
+            # Validate the rating is between 1 and 5
+            if not (1 <= skill_data.rating <= 5):
+                raise HTTPException(status_code=400, detail=f"Invalid rating for skill: {skill_data.skill}. Rating must be between 1 and 5.")
+
+
             # Proceed with finding or creating the skill, and updating the rating as before
             skill = db.query(models.Skill).filter_by(skill_name=skill_data.skill).first()
             if not skill:
@@ -105,3 +111,27 @@ def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Dep
     }
 
     return schemas.User(**user_dict)
+
+
+@app.get("/skills/", response_model=List[schemas.SkillFrequency])
+def read_skill_frequencies(min_frequency: Optional[int] = Query(None), max_frequency: Optional[int] = Query(None), db: Session = Depends(get_db)):
+    # Query to count the number of users with each skill
+    query = (
+        db.query(
+            models.Skill.skill_name,  # Adjust attribute access as needed
+            func.count(models.UserSkill.user_id).label("frequency")
+        )
+        .join(models.UserSkill, models.UserSkill.skill_id == models.Skill.skill_id)
+        .group_by(models.Skill.skill_id)
+    )
+    
+    # Apply filtering based on min_frequency and max_frequency
+    if min_frequency is not None:
+        query = query.having(func.count(models.UserSkill.user_id) >= min_frequency)
+    if max_frequency is not None:
+        query = query.having(func.count(models.UserSkill.user_id) <= max_frequency)
+    
+    skills = query.all()
+    
+    # Adjust the return to match your schema or desired format
+    return [{"skill_name": skill.skill_name, "frequency": skill.frequency} for skill in skills]

@@ -2,7 +2,7 @@
 
 Working with denormalized data can cause these issues:
 
-1. uery Complexity: Searching, filtering, or joining data based on values within an array can be more complex and less efficient than with normalized data.
+1. Query Complexity: Searching, filtering, or joining data based on values within an array can be more complex and less efficient than with normalized data.
 2. Data Integrity: Ensuring the integrity of data within an array (e.g., no duplicates, valid values) is more challenging.
 3. Updates and Scalability: Modifying a single element within an array requires reading and rewriting the entire array, which can be inefficient. As the data grows, these operations can become increasingly cumbersome and slow.
 
