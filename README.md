@@ -73,6 +73,14 @@ To start the FastAPI application, run the following command:
 uvicorn app.main:app --reload
 ```
 
+## Updating Dependencies
+
+To update requirements.txt, run the following command:
+
+```bash
+pip freeze > requirements.txt
+```
+
 ## Accessing the Application
 
 After starting the application, you can access the API documentation at:
