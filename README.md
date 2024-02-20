@@ -83,9 +83,15 @@ To run the tests, run the following command:
 pytest ./app/test_api.py
 ```
 
-Note that running the tests will modify the database, so it is strongly recommended to run `python3 app/db_init.py` after running the tests to reset the database.
+Note that running the tests will modify the database, so it is strongly recommended to run 
+```bash
+python3 app/db_init.py`
+```
+after running the tests to reset the database.
 
 ### Starting the Application
+
+Before starting the FastAPI application, it is recommended to restart Visual Studio Code to ensure the venv is updated with the new libraries. If VSCode is not restarted, there might be this error `ImportError: cannot import name 'field_validator' from 'pydantic'`
 
 To start the FastAPI application, run the following command:
 
