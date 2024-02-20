@@ -129,6 +129,7 @@ The database schema consists of four tables: `User`, `Skill`, and a junction tab
 - `name`: string
 - `email`: string, unique
 - `phone`: string, unique
+- `checked_in`: boolean
 
 ### Skill
 
@@ -150,24 +151,31 @@ The database schema consists of four tables: `User`, `Skill`, and a junction tab
 ## Design Consinderations
 
 1. We don't store the the skills and ratings as an array in the participants table in order to preserve normalization. Normalization aims to reduce redundancy and improve data integrity by ensuring that each piece of data is stored only once. Working with denormalized data can cause these issues:
+
    - **Query Complexity**: Searching, filtering, or joining data based on values within an array can be more complex and less efficient than with normalized data.
    - **Data Integrity**: Ensuring the integrity of data within an array (e.g., no duplicates, valid values) is more challenging.
    - **Updates and Scalability**: Modifying a single element within an array requires reading and rewriting the entire array, which can be inefficient. As the data grows, these operations can become increasingly cumbersome and slow.
 
 2. We have a seperate table for Skills and a seperate junction table for the many to many relationship between participants and skills. We do this for the following reasons:
-  - **Avoiding Redundancy**: Storing skill names directly in the ParticipantSkills table would lead to redundancy. The same skill name would be repeated for each participant possessing that skill, consuming more storage and potentially leading to inconsistencies (e.g., spelling errors leading to the same skill being listed under multiple variations).
-  - **Data Integrity and Consistency**: A separate Skills table ensures that each skill is defined once and only once, maintaining a single source of truth. This approach prevents inconsistencies in skill names and makes it easier to update or correct a skill name across all associations.
-  - **Efficiency**: Linking participants to skills through IDs is more efficient than using text strings. Integer comparisons (IDs) are faster than string comparisons (skill names), which can improve the performance of queries, especially as the dataset grows.
-  - **Flexibility for Future Changes**: If we need to add more information about a skill (e.g., a description, category, or proficiency level required), having a separate Skills table makes it easier to extend the database schema without affecting the structure of other tables.
-  - **Simplifying Relationships**: By using a ParticipantSkills junction table, we can easily manage many-to-many relationships between participants and skills, including storing additional information about each association, such as the rating, without complicating the schema.
 
+- **Avoiding Redundancy**: Storing skill names directly in the ParticipantSkills table would lead to redundancy. The same skill name would be repeated for each participant possessing that skill, consuming more storage and potentially leading to inconsistencies (e.g., spelling errors leading to the same skill being listed under multiple variations).
+- **Data Integrity and Consistency**: A separate Skills table ensures that each skill is defined once and only once, maintaining a single source of truth. This approach prevents inconsistencies in skill names and makes it easier to update or correct a skill name across all associations.
+- **Efficiency**: Linking participants to skills through IDs is more efficient than using text strings. Integer comparisons (IDs) are faster than string comparisons (skill names), which can improve the performance of queries, especially as the dataset grows.
+- **Flexibility for Future Changes**: If we need to add more information about a skill (e.g., a description, category, or proficiency level required), having a separate Skills table makes it easier to extend the database schema without affecting the structure of other tables.
+- **Simplifying Relationships**: By using a ParticipantSkills junction table, we can easily manage many-to-many relationships between participants and skills, including storing additional information about each association, such as the rating, without complicating the schema.
 
 ## API Endpoints
 
-- `GET /users`: Get a list of all users (with optional filters for skip and pagination 100 at a time)
+- `GET /users`: Get a list of all users (with optional filters for cheked_in_only, skip and limit)
 - `GET /users/{user_id}`: Get a user by their ID.
 - `PUT /users/{user_id}`: Update a user by their ID (allows for partial updating).
-- `GET /skills`: Get a list of all skills (with optional filters for minimum and maximum frequency)
+- `GET /skills`: Get a list of all skills (with optional filters for minimum and maximum
+  frequency)
+- `PUT /users/{user_id}/checkin`: Checks the user in
+- `POST /scan`: Scans a user into an event
+- `GET /users/{user_id}/events/`: Get a list of all events that a user has been scanned into
+- `POST /hardware/{hardware_id}/signout`: Signs out a piece of hardware
+- `POST /hardware/{hardware_id}/return`: Returns a piece of hardware
 
 ### `GET /users`
 
@@ -177,6 +185,7 @@ Optional arguments:
 
 - `skip` (int): The number of users to skip over . Defaults to 0
 - `limit` (int): The number of users to return. Defualts to 100
+- `checked_in_only` (bool): If true, only returns users who are checked in. Defaults to false
 
 #### Example Request
 
@@ -353,4 +362,142 @@ GET /skills/?min_frequency=10&max_frequency=15
     "frequency": 14
   }
 ]
+```
+
+### `PUT /users/{user_id}/checkin`
+
+Checks the user in. If the user is already checked in, this endpoint will return a 400 Bad Request.
+
+Arguments:
+
+- `user_id` (int): The ID of the user to check in.
+
+#### Example Request
+
+Check in the user with user_id 1.
+
+```
+PUT /users/1/checkin
+```
+
+#### Example Response
+
+```json
+{
+  "name": "Emily May",
+  "company": "Graham Group",
+  "email": "estradadana@example.org",
+  "phone": "947.098.3138x493",
+  "checked_in": true,
+  "skills": [
+    {
+      "skill": "Foundation",
+      "rating": 1
+    },
+    {
+      "skill": "Julia",
+      "rating": 3
+    },
+    {
+      "skill": "Spectre.css",
+      "rating": 4
+    },
+    {
+      "skill": "Ruby",
+      "rating": 4
+    }
+  ]
+}
+```
+
+### `POST /scan`
+
+"Scans" a user by adding an entry into the "ScanEvents" table. If the user is already checked in, this endpoint will return a 400 Bad Request.
+
+Arguments:
+
+- `user_id` (int): The ID of the user to scan.
+- `event_id` (int): The ID of the event to scan the user into.
+
+#### Example Request
+
+Scan the user with user_id 1 into an event with event_id 1.
+
+```
+POST /scan/?user_id=1&event_id=1
+```
+
+```json
+{
+  "message": "User scanned successfully"
+}
+```
+
+### `GET /users/{user_id}/events/`
+
+Get a list of all events that a user has been scanned into.
+
+Arguments:
+
+- `user_id` (int): The ID of the user to get events for.
+
+#### Example Request
+
+Get all events that the user with user_id 1 has been scanned into.
+
+```
+GET /users/1/events/
+```
+
+#### Example Response
+
+```json
+[
+  {
+    "name": "Vonage API Workshop",
+    "description": "A Nanoleaf Shapes Mini Triangle Smarter Kit will be awarded to each member of the winning team for Best Use of Vonage API. Vonage is a cloud communications platform that allows developers to integrate voice, video and messaging into their applications using their communication APIs. So whether you want to build video calls into your app, create a Facebook bot, or build applications on top of programmable phone numbers, Vonage has got you covered",
+    "event_id": 1
+  }
+]
+```
+
+### `POST /hardware/{hardware_id}/signout`
+
+Signs out a piece of hardware by "signed_out_by_user_id" field to be the user_id of the person signing out the hardware.
+
+Arguments:
+- `hardware_id` (int): The ID of the hardware to sign out.
+- `user_id` (int): The ID of the user signing out the hardware.
+
+#### Example Request
+Sign out the hardware with hardware_id 1 by the user with user_id 1.
+
+```
+POST /hardware/1/signout/?user_id=1
+```
+
+```json
+{
+  "message": "Hardware Arduino Uno signed out by user 1 (Breanna Dillon)"
+}
+```
+
+### `POST /hardware/{hardware_id}/return`
+
+Returns a piece of hardware by setting the "signed_out_by_user_id" field to null.
+
+Arguments:
+- `hardware_id` (int): The ID of the hardware to return.
+
+#### Example Request
+Return the hardware with hardware_id 1.
+
+```
+POST /hardware/1/return
+```
+
+```json
+{
+  "message": "Hardware Arduino Uno returned by user 1 (Breanna Dillon)"
+}
 ```

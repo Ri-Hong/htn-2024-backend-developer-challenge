@@ -25,6 +25,7 @@ class UserBase(BaseModel):
     company: str
     email: str
     phone: str
+    checked_in: bool
 
 class UserCreate(UserBase):
     pass
@@ -47,6 +48,19 @@ class User(UserBase):
 class SkillFrequency(BaseModel):
     skill_name: str
     frequency: int
+
+    class Config:
+        orm_mode = True
+
+class EventBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+class EventCreate(EventBase):
+    pass
+
+class Event(EventBase):
+    event_id: int
 
     class Config:
         orm_mode = True

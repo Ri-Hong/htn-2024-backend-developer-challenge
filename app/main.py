@@ -8,11 +8,14 @@ from . import schemas, models  # Adjust imports as necessary
 app = FastAPI()
 
 @app.get("/users/", response_model=List[schemas.User])
-def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    users = db.query(models.User).offset(skip).limit(limit).all()
+def read_users(skip: int = 0, limit: int = 100, checked_in_only: bool = False, db: Session = Depends(get_db)):
+    if checked_in_only:
+        users = db.query(models.User).filter(models.User.checked_in == True).offset(skip).limit(limit).all()
+    else:
+        users = db.query(models.User).offset(skip).limit(limit).all()
+
     result = []
     for user in users:
-        # Fetch skills through the UserSkill association and then access the Skill model
         skills = [
             {"skill": user_skill.skill.skill_name, "rating": user_skill.rating}
             for user_skill in user.skills  # Assuming 'skills' is properly set up as a relationship on the User model
@@ -22,6 +25,7 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
             "company": user.company,
             "email": user.email,
             "phone": user.phone,
+            "checked_in": user.checked_in,
             "skills": skills
         }
         result.append(schemas.User(**user_dict))  # Ensure this matches your schema class name exactly
@@ -42,6 +46,7 @@ def read_user_by_id(user_id: int, db: Session = Depends(get_db)):
         "company": user.company,
         "email": user.email,
         "phone": user.phone,
+        "checked_in": user.checked_in,
         "skills": skills
     }
     return schemas.User(**user_dict)
@@ -107,6 +112,7 @@ def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Dep
         "company": user.company,
         "email": user.email,
         "phone": user.phone,
+        "checked_in": user.checked_in,
         "skills": skills
     }
 
@@ -135,3 +141,111 @@ def read_skill_frequencies(min_frequency: Optional[int] = Query(None), max_frequ
     
     # Adjust the return to match your schema or desired format
     return [{"skill_name": skill.skill_name, "frequency": skill.frequency} for skill in skills]
+
+
+@app.put("/users/{user_id}/checkin", response_model=schemas.User)
+def checkin_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.checked_in:
+        raise HTTPException(status_code=400, detail="User already checked in")
+    
+    user.checked_in = True
+    db.commit()
+    db.refresh(user)
+    # Reconstruct the response with the updated skills
+    skills = [
+        {
+            "skill": user_skill.skill.skill_name,
+            "rating": user_skill.rating
+        }
+        for user_skill in user.skills
+    ]
+
+    user_dict = {
+        "name": user.name,
+        "company": user.company,
+        "email": user.email,
+        "phone": user.phone,
+        "checked_in": user.checked_in,
+        "skills": skills
+    }
+
+    return schemas.User(**user_dict)
+
+@app.post("/scan/")
+def scan_user(user_id: int, event_id: int, db: Session = Depends(get_db)):
+    # Check if the event exists
+    event = db.query(models.Event).filter(models.Event.event_id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    # Check if the user exists
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Check if the user is already scanned for the event
+    existing_scan = db.query(models.ScanEvent).filter(
+        models.ScanEvent.user_id == user_id,
+        models.ScanEvent.event_id == event_id
+    ).first()
+    if existing_scan:
+        raise HTTPException(status_code=400, detail="User already scanned for this event")
+
+    # Create a new ScanEvent since the user hasn't been scanned for this event yet
+    scan_event = models.ScanEvent(user_id=user_id, event_id=event_id)
+    db.add(scan_event)
+    db.commit()
+    return {"message": "User scanned successfully"}
+
+
+@app.get("/users/{user_id}/events/", response_model=List[schemas.Event])
+def get_user_events(user_id: int, db: Session = Depends(get_db)):
+    # Check if the user_id exists
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    scan_events = db.query(models.ScanEvent).filter(models.ScanEvent.user_id == user_id).all()
+    event_ids = [scan_event.event_id for scan_event in scan_events]
+    events = db.query(models.Event).filter(models.Event.event_id.in_(event_ids)).all()
+    return events
+
+@app.post("/hardware/{hardware_id}/signout")
+def sign_out_hardware(hardware_id: int, user_id: int, db: Session = Depends(get_db)):
+    hardware = db.query(models.Hardware).filter(models.Hardware.hardware_id == hardware_id).first()
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    
+    if not hardware:
+        raise HTTPException(status_code=404, detail="Hardware not found")
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if hardware.signed_out_by_user_id is not None:
+        raise HTTPException(status_code=400, detail="Hardware is already signed out")
+    
+    hardware.signed_out_by_user_id = user_id
+    db.commit()
+    return {"message": f"Hardware {hardware.name} signed out by user {user_id} ({user.name})"}
+
+
+@app.post("/hardware/{hardware_id}/return")
+def return_hardware(hardware_id: int, db: Session = Depends(get_db)):
+    hardware = db.query(models.Hardware).filter(models.Hardware.hardware_id == hardware_id).first()
+    if not hardware:
+        raise HTTPException(status_code=404, detail="Hardware not found")
+    if hardware.signed_out_by_user_id is None:
+        raise HTTPException(status_code=400, detail="Hardware is not signed out")
+    
+    # Fetch the user who signed out the hardware
+    user = db.query(models.User).filter(models.User.user_id == hardware.signed_out_by_user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User who signed out the hardware not found")
+
+    user_name = user.name  # Store user name before setting it to None
+    hardware.signed_out_by_user_id = None
+    db.commit()
+    return {"message": f"Hardware {hardware.name} returned by user {user.user_id} ({user_name})"}
+

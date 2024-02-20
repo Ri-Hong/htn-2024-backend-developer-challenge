@@ -1,0 +1,12 @@
+[
+    {"name": "Arduino Uno", "serial_number": "ARD123456UNO"},
+    {"name": "Raspberry Pi 4", "serial_number": "RPI1234564"},
+    {"name": "Servo Motor SG90", "serial_number": "SERVO123SG90"},
+    {"name": "ESP8266 WiFi Module", "serial_number": "ESP8266123"},
+    {"name": "Breadboard", "serial_number": "BREAD123456"},
+    {"name": "Ultrasonic Sensor HC-SR04", "serial_number": "ULTRA123SR04"},
+    {"name": "LED Light Strip", "serial_number": "LED123456LS"},
+    {"name": "Raspberry Pi Zero", "serial_number": "RPI01234ZERO"},
+    {"name": "Stepper Motor NEMA 17", "serial_number": "STEP123N17"},
+    {"name": "Arduino Mega", "serial_number": "ARD789456MEGA"}
+]
