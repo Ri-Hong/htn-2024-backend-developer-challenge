@@ -1,7 +1,6 @@
 from datetime import datetime
 import json
 import logging
-import random
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -77,15 +76,12 @@ def init_db():
                 logging.warning(f"Skipping user with duplicate email or phone: {user_data['email']} / {user_data['phone']}")
                 continue
 
-            # Randomly decide whether or not the user is checked in
-            checked_in = random.choice([True, False])
-
             user = User(
                 name=user_data['name'],
                 company=user_data['company'],
                 email=user_data['email'],
                 phone=user_data['phone'],
-                checked_in=checked_in  # Set the randomly determined checked_in status
+                checked_in=False # Assume all users are not checked in
             )
             db.add(user)
             db.flush()  # Assign ID without committing
