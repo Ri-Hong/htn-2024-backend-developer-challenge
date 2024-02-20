@@ -79,7 +79,7 @@ Load the challenge data with:
 python3 app/db_init.py
 ```
 
-That program creates a database file called sql_app.db in the root directory of the project and populates it with data from HTN_2023_BE_Challenge_Data.json. Note that this script is destructive, meaning that running it will delete the existing database file and create a new one.
+That program creates a database file called sql_app.db in the root directory of the project and populates it with data from HTN_2023_BE_Challenge_Data.json. Note that this script is destructive, meaning that running it will delete the existing database file (if one exists) and create a new one.
 
 ### Testing
 
@@ -96,8 +96,6 @@ python3 app/db_init.py
 after running the tests to reset the database.
 
 ### Starting the Application
-
-Before starting the FastAPI application, it is recommended to restart Visual Studio Code to ensure the venv is updated with the new libraries. If VSCode is not restarted, there might be this error `ImportError: cannot import name 'field_validator' from 'pydantic'`
 
 To start the FastAPI application, run the following command:
 
