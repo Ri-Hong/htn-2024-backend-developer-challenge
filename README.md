@@ -2,7 +2,7 @@
 
 Hack the North 2024 Backend Developer Challenge
 
-This repository contains a FastAPI application with SQLite database, using SQLAlchemy as the ORM.
+This repository contains a FastAPI application with a SQLite database, using SQLAlchemy as the ORM.
 
 ## Startup Instructions
 
@@ -115,6 +115,10 @@ This page also provides an interface for directly calling endpoints from the bro
   - `schemas.py`: The Pydantic models for the app, used for request and response validation.
   - `database.py`: The database connection and session management.
 
+## Tools
+- `db_init.py` A script to initialize the database with the data from HTN_2023_BE_Challenge_Data.json
+- `test_api.py` A script to test the API endpoints
+
 ## Notes and Assumptions
 
 Some data had some strange entries, so the following assumptions were made and the data was cleaned accordingly. Note that the following behaviours are implemented in the db_init.py script.
@@ -129,10 +133,9 @@ db_init.py will output warning messages if any of the above assumptions are viol
 
 ![Entitiy Relationship Diagram](ERD.png)
 
-The database schema consists of four tables: `User`, `Skill`, and a junction table `UserSkill`.
+The database schema consists of 5 tables: `Users`, `Skills`, a junction table `UserSkill`, `Hardware`, `Events`, `ScanEvents`.
 
 ### User
-
 - `user_id`: integer, primary key
 - `name`: string
 - `email`: string, unique
@@ -140,21 +143,42 @@ The database schema consists of four tables: `User`, `Skill`, and a junction tab
 - `checked_in`: boolean
 
 ### Skill
-
 - `skill_id`: integer, primary key
 - `skill_name`: string, unique
 
 ### UserSkill (Junction Table)
-
 - `user_id`: integer, foreign key to `User.user_id`
 - `skill_id`: integer, foreign key to `Skill.skill_id`
 - `rating`: integer
 
-### Relationships
+### Hardware
+- `hardware_id`: integer, primary key
+- `name`: string
+- `serial_number`: unique string
+- `signed_out_by_user_id`: integer, foreign key to `User.user_id`
 
+### Events
+- `event_id`: integer, primary key
+- `name`: unique string
+- `start_time`: datetime
+- `end_time`: datetime
+- `description`: string
+- `location`: string
+
+### ScanEvents
+- `scan_id`: integer, primary key
+- `user_id`: integer, foreign key to `User.user_id`
+- `event_id`: integer, foreign key to `Event.event_id`
+- `timestamp`: datetime
+
+### Relationships
 - A `User` can have multiple `UserSkill` records. (One-to-Many relationship)
 - A `Skill` can have multiple `UserSkill` records. (One-to-Many relationship)
 - The `UserSkill` table serves as a junction table to facilitate a Many-to-Many relationship between `User` and `Skill`.
+- A `User` can have multiple `ScanEvents` records. (One-to-Many relationship)
+- An `Event` can have multiple `ScanEvents` records. (One-to-Many relationship)
+- A `User` can have multiple `Hardware` records. (One-to-Many relationship)
+
 
 ## Design Consinderations
 
@@ -171,6 +195,7 @@ The database schema consists of four tables: `User`, `Skill`, and a junction tab
 - **Efficiency**: Linking participants to skills through IDs is more efficient than using text strings. Integer comparisons (IDs) are faster than string comparisons (skill names), which can improve the performance of queries, especially as the dataset grows.
 - **Flexibility for Future Changes**: If we need to add more information about a skill (e.g., a description, category, or proficiency level required), having a separate Skills table makes it easier to extend the database schema without affecting the structure of other tables.
 - **Simplifying Relationships**: By using a ParticipantSkills junction table, we can easily manage many-to-many relationships between participants and skills, including storing additional information about each association, such as the rating, without complicating the schema.
+
 
 ## API Endpoints
 
