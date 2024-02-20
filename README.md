@@ -65,6 +65,12 @@ To install the required dependencies, follow these steps:
    pip install -r requirements.txt
    ```
 
+Note: After installing the required libraries, restart the venv to ensure that the new changes are captured. This can be done by
+```bash
+deactivate
+source venv/bin/activate
+```
+
 ### Loading the Database
 
 Load the challenge data with:
