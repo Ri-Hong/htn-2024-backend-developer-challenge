@@ -85,7 +85,7 @@ pytest ./app/test_api.py
 
 Note that running the tests will modify the database, so it is strongly recommended to run 
 ```bash
-python3 app/db_init.py`
+python3 app/db_init.py
 ```
 after running the tests to reset the database.
 
