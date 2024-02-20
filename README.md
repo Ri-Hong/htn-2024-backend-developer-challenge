@@ -83,7 +83,7 @@ To run the tests, run the following command:
 pytest ./app/test_api.py
 ```
 
-Note that running the tests will modify the database, so it is strongly recommended to run `python3 db_init.py` after running the tests to reset the database.
+Note that running the tests will modify the database, so it is strongly recommended to run `python3 app/db_init.py` after running the tests to reset the database.
 
 ### Starting the Application
 
