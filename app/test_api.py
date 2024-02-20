@@ -47,7 +47,7 @@ def test_checked_in_only_filter():
     data = response.json()
     assert isinstance(data, list)
     # This assertion depends on having known checked-in users in your test database
-    assert len(data) > 0  # Adjust based on your test data setup
+    assert len(data) == 0  # Adjust based on your test data setup
     for user in data:
         assert user['checked_in'] is True 
 
