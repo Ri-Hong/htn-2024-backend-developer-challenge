@@ -9,6 +9,9 @@ app = FastAPI()
 
 @app.get("/users/", response_model=List[schemas.User])
 def read_users(skip: int = 0, limit: int = 100, checked_in_only: bool = False, db: Session = Depends(get_db)):
+    if skip < 0 or limit < 0:
+        raise HTTPException(status_code=400, detail="Skip and limit query parameters must be non-negative")
+    
     if checked_in_only:
         users = db.query(models.User).filter(models.User.checked_in == True).offset(skip).limit(limit).all()
     else:
@@ -249,3 +252,42 @@ def return_hardware(hardware_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": f"Hardware {hardware.name} returned by user {user.user_id} ({user_name})"}
 
+
+@app.get("/hacker/{user_id}/dashboard", response_model=schemas.HackerDashboard)
+def get_hacker_dashboard(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    signed_out_hardware = db.query(models.Hardware).filter(models.Hardware.signed_out_by_user_id == user_id).all()
+    checked_in_events = db.query(models.ScanEvent).filter(models.ScanEvent.user_id == user_id).all()
+
+    dashboard_info = {
+        "user_info": {
+            "name": user.name,
+            "email": user.email,
+            "phone": user.phone,
+            "company": user.company,  # Make sure this field is included
+            "checked_in": user.checked_in,  # Make sure this field is included
+            "skills": [
+                {"skill": skill.skill.skill_name, "rating": skill.rating}
+                for skill in user.skills
+            ],
+        },
+        "signed_out_hardware": [
+            {"name": hardware.name, "serial_number": hardware.serial_number}
+            for hardware in signed_out_hardware
+        ],
+        "checked_in_events": [
+            {
+                "name": event.event.name,
+                "description": event.event.description,  # Make sure this field is included
+                "start_time": event.event.start_time.isoformat(),
+                "end_time": event.event.end_time.isoformat(),
+                "location": event.event.location,  # Make sure this field is included
+            }
+            for event in checked_in_events
+        ],
+    }
+
+    return dashboard_info

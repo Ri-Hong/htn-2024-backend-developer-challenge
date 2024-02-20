@@ -176,6 +176,7 @@ The database schema consists of four tables: `User`, `Skill`, and a junction tab
 - `GET /users/{user_id}/events/`: Get a list of all events that a user has been scanned into
 - `POST /hardware/{hardware_id}/signout`: Signs out a piece of hardware
 - `POST /hardware/{hardware_id}/return`: Returns a piece of hardware
+- `GET /hacker/{user_id}/dashboard`: Gets information related to a hacker
 
 ### `GET /users`
 
@@ -198,40 +199,49 @@ GET /users
 #### Example Response
 
 ```json
+	
+Response body
+Download
 [
   {
-    "name": "Sherry Turner",
-    "company": "Clark, Lindsey and Washington",
-    "email": "chad13@example.org",
-    "phone": "001-360-178-3683x492",
+    "name": "Andrew Stark",
+    "company": "Barry Group",
+    "email": "wrobinson@example.org",
+    "phone": "336.286.5914",
+    "checked_in": true,
     "skills": [
       {
-        "skill": "Svelte",
+        "skill": "Sed",
         "rating": 3
       },
       {
-        "skill": "Nest.js",
+        "skill": "Smalltalk",
         "rating": 3
-      },
-      {
-        "skill": "Element UI",
-        "rating": 4
       }
     ]
   },
   {
-    "name": "Jennifer Morrison",
-    "company": "Lynn, Jones and Glass",
-    "email": "shannon64@example.org",
-    "phone": "901-545-3454",
+    "name": "Jenny Smith",
+    "company": "Ortiz-Adams",
+    "email": "geraldstein@example.com",
+    "phone": "596.231.3418",
+    "checked_in": false,
     "skills": [
       {
-        "skill": "Ruby on Rails",
-        "rating": 2
+        "skill": "PHP",
+        "rating": 4
       },
       {
-        "skill": "C++",
-        "rating": 4
+        "skill": "Materialize",
+        "rating": 1
+      },
+      {
+        "skill": "Svelte",
+        "rating": 1
+      },
+      {
+        "skill": "Unreal Engine",
+        "rating": 2
       }
     ]
   }
@@ -259,6 +269,7 @@ GET /users/1
   "company": "Graham Group",
   "email": "estradadana@example.org",
   "phone": "947.098.3138x493",
+  "checked_in": false,
   "skills": [
     {
       "skill": "Foundation",
@@ -311,6 +322,7 @@ PUT /users/1
   "company": "Graham Group",
   "email": "estradadana@example.org",
   "phone": "123-456-7890",
+  "checked_in": false,
   "skills": [
     {
       "skill": "Foundation",
@@ -466,10 +478,12 @@ GET /users/1/events/
 Signs out a piece of hardware by "signed_out_by_user_id" field to be the user_id of the person signing out the hardware.
 
 Arguments:
+
 - `hardware_id` (int): The ID of the hardware to sign out.
 - `user_id` (int): The ID of the user signing out the hardware.
 
 #### Example Request
+
 Sign out the hardware with hardware_id 1 by the user with user_id 1.
 
 ```
@@ -487,9 +501,11 @@ POST /hardware/1/signout/?user_id=1
 Returns a piece of hardware by setting the "signed_out_by_user_id" field to null.
 
 Arguments:
+
 - `hardware_id` (int): The ID of the hardware to return.
 
 #### Example Request
+
 Return the hardware with hardware_id 1.
 
 ```
@@ -499,5 +515,53 @@ POST /hardware/1/return
 ```json
 {
   "message": "Hardware Arduino Uno returned by user 1 (Breanna Dillon)"
+}
+```
+
+### `GET /hacker/{user_id}/dashboard`
+
+Gets information related to a hacker.
+
+Arguments:
+- `user_id` (int): The ID of the user to get information for.
+
+#### Example Request
+
+Get information for the user with user_id 1.
+
+```
+GET /hacker/1/dashboard
+```
+
+#### Example Response
+
+```json
+{
+  "user_info": {
+    "name": "Breanna Dillon",
+    "company": "Jackson Ltd",
+    "email": "lorettabrown@example.net",
+    "phone": "+1-924-116-7963",
+    "checked_in": true
+  },
+  "signed_out_hardware": [
+    {
+      "name": "Arduino Uno",
+      "serial_number": "ARD123456UNO"
+    },
+    {
+      "name": "Raspberry Pi 4",
+      "serial_number": "RPI1234564"
+    }
+  ],
+  "checked_in_events": [
+    {
+      "name": "Vonage API Workshop",
+      "description": "A Nanoleaf Shapes Mini Triangle Smarter Kit will be awarded to each member of the winning team for Best Use of Vonage API. Vonage is a cloud communications platform that allows developers to integrate voice, video and messaging into their applications using their communication APIs. So whether you want to build video calls into your app, create a Facebook bot, or build applications on top of programmable phone numbers, Vonage has got you covered",
+      "start_time": "2021-01-12T09:00:00",
+      "end_time": "2021-01-12T09:30:00",
+      "location": "MC 2025"
+    }
+  ]
 }
 ```
