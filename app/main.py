@@ -38,7 +38,7 @@ def read_users(skip: int = 0, limit: int = 100, checked_in_only: bool = False, d
 def read_user_by_id(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.user_id == user_id).first()
     if user is None:
-        return None
+        raise HTTPException(status_code=404, detail=f"User with id {user_id} not found")
     # Fetch skills through the UserSkill association and then access the Skill model
     skills = [
         {"skill": user_skill.skill.skill_name, "rating": user_skill.rating}
@@ -62,7 +62,7 @@ def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Dep
         raise HTTPException(status_code=404, detail="User not found")
 
     # Update user basic attributes
-    update_data = user_update.dict(exclude_unset=True, exclude={"skills"})
+    update_data = user_update.model_dump(exclude_unset=True, exclude={"skills"})
     for key, value in update_data.items():
         setattr(user, key, value)
 
@@ -124,6 +124,9 @@ def update_user(user_id: int, user_update: schemas.UserUpdate, db: Session = Dep
 
 @app.get("/skills/", response_model=List[schemas.SkillFrequency])
 def read_skill_frequencies(min_frequency: Optional[int] = Query(None), max_frequency: Optional[int] = Query(None), db: Session = Depends(get_db)):
+    if min_frequency is not None and max_frequency is not None and min_frequency > max_frequency:
+        raise HTTPException(status_code=400, detail="min_frequency must be less than or equal to max_frequency")
+    
     # Query to count the number of users with each skill
     query = (
         db.query(

@@ -37,6 +37,7 @@ class UserUpdate(UserBase):
     company: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
+    checked_in: Optional[bool] = None
     skills: Optional[List[SkillUpdate]] = None
 
 

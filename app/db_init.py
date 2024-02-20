@@ -1,13 +1,25 @@
 from datetime import datetime
 import json
 import logging
-import random  # Import the random module
+import random
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models import Base, Event, Hardware, User, Skill, UserSkill
 
+
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+DATABASE_FILE_PATH = "./sql_app.db"  # Define the path to the database file
+
+# Check if the database file exists and delete it if it does
+if os.path.exists(DATABASE_FILE_PATH):
+    os.remove(DATABASE_FILE_PATH)
+    logging.info(f"Deleted existing database file: {DATABASE_FILE_PATH}")
+else:
+    logging.info(f"Database file not found, no need to delete: {DATABASE_FILE_PATH}")
+
 
 DATABASE_URL = "sqlite:///./sql_app.db"
 engine = create_engine(DATABASE_URL)

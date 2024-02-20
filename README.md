@@ -73,7 +73,15 @@ Load the challenge data with:
 python3 load_data.py
 ```
 
-That program creates a database file called sql_app.db in the root directory of the project and populates it with data from HTN_2023_BE_Challenge_Data.json.
+That program creates a database file called sql_app.db in the root directory of the project and populates it with data from HTN_2023_BE_Challenge_Data.json. Note that this script is destructive, meaning that running it will delete the existing database file and create a new one.
+
+### Testing
+To run the tests, run the following command:
+```bash
+pytest ./app/test_api.py
+```
+Note that running the tests will modify the database, so it is strongly recommended to run `python3 load_data.py` after running the tests to reset the database.
+
 
 ### Starting the Application
 
