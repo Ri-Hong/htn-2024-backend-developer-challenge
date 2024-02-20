@@ -242,9 +242,6 @@ GET /users
 #### Example Response
 
 ```json
-
-Response body
-Download
 [
   {
     "name": "Andrew Stark",
@@ -352,10 +349,11 @@ Update the phone number of the user with user_id 1.
 PUT /users/1
 ```
 
-````json
+```json
 {
   "phone": "123-456-7890"
 }
+```
 
 #### Example Response
 
@@ -385,7 +383,7 @@ PUT /users/1
     }
   ]
 }
-````
+```
 
 ### `GET /skills`
 
